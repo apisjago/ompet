@@ -10,6 +10,23 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
+    // Relasi ke Wallet
+    // ✅ Ganti nama fungsi dari wallet() ke wallets()
+public function wallets()
+{
+    return $this->hasMany(Wallet::class);
+}
+
+
+public function getSaldoAttribute()
+{
+    $debit = $this->wallets()->where('status', 'done')->sum('debit');
+    $credit = $this->wallets()->where('status', 'done')->sum('credit');
+    return $credit - $debit;
+}
+
+
+    
     use HasApiTokens, HasFactory, Notifiable;
 
     /**

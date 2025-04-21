@@ -46,5 +46,8 @@ Route::post('/reject/{wallet}', [WalletController::class, 'rejectRequest'])
     ->middleware('role:bank'); // Middleware role untuk pengguna 'bank'
 
     Route::post('/topup-siswa', [WalletController::class, 'topupSiswa'])->name('topup.siswa');
-
+    Route::post('/withdraw-siswa', [WalletController::class, 'withdrawSiswa'])->name('withdraw.siswa'); 
+    Route::get('/laporan-siswa/{id}/pdf', [HomeController::class, 'exportSiswaPdf'])->name('laporan.siswa.pdf');
+    Route::get('/export-siswa-pdf/{id}', [HomeController::class, 'exportSiswaPdf'])->name('export-siswa-pdf');
+    
     Route::get('/export-transactions-pdf', [HomeController::class, 'exportPdf'])->name('export-transactions-pdf');

@@ -7,7 +7,7 @@ use App\Models\Wallet;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-
+use Barryvdh\DomPDF\Facade as PDF;
 class WalletController extends Controller
 {
     public function topup(Request $request)
@@ -143,5 +143,36 @@ public function transfer(Request $request)
 
     return redirect()->back()->with('success', 'Top-up berhasil untuk ' . $siswa->name);
 }
+
+public function withdrawSiswa(Request $request)
+{
+    $request->validate([
+        'student_id' => 'required|exists:users,id',
+        'credit' => 'required|numeric|min:10000'
+    ]);
+
+    $student = User::find($request->student_id);
+
+    // Hitung saldo siswa
+    $totalSaldo = Wallet::where('user_id', $student->id)
+        ->where('status', 'done')
+        ->sum(DB::raw('credit - debit'));
+
+    if ($totalSaldo < $request->credit) {
+        return redirect()->back()->with('status', 'Saldo siswa tidak mencukupi');
+    }
+
+    // Tambahkan transaksi withdraw
+    Wallet::create([
+        'user_id' => $student->id,
+        'debit' => $request->credit,
+        'credit' => 0,
+        'description' => 'Withdraw oleh bank',
+        'status' => 'done',
+    ]);
+
+    return redirect()->back()->with('status', 'Withdraw berhasil');
+}
+
 
 }

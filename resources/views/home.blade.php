@@ -324,262 +324,315 @@
         </div>
 
         @if(Auth::user()->role == 'admin')
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="card mb-4">
-                        <div class="card-header bg-dark">
-                            <i class="fas fa-tachometer-alt me-2"></i>Admin Dashboard
-                        </div>
-
-                        <div class="card-body">
-                            <div class="row mb-4">
-                                <div class="col-md-4">
-                                    <div class="card text-center p-3">
-                                        <div class="dashboard-icon">
-                                            <i class="fas fa-users"></i>
-                                        </div>
-                                        <h3>{{ $users->count() }}</h3>
-                                        <p class="text-muted mb-0">Total Users</p>
-                                    </div>
-                                </div>
-
-                                <div class="col-md-8">
-                                    <div class="card h-100">
-                                        <div class="card-header">
-                                            <i class="fas fa-exchange-alt me-2"></i>Recent Transactions
-                                        </div>
-                                        <div class="card-body">
-                                            @if($mutasi->isEmpty())
-                                                <p class="text-center text-muted">No transactions found.</p>
-                                            @else
-                                                <ul class="list-group list-group-flush">
-                                                    @foreach($mutasi->take(5) as $mutation)
-                                                        <li class="list-group-item">
-                                                            <div class="d-flex justify-content-between align-items-center">
-                                                                <div>
-                                                                    <span
-                                                                        class="@if($mutation->status == 'approved') transaction-approved @elseif($mutation->status == 'rejected') transaction-rejected @endif">
-                                                                        {{ $mutation->description }}
-                                                                    </span><br>
-                                                                    <small class="text-muted">
-                                                                        {{ $mutation->user->name ?? 'Unknown' }}
-                                                                    </small>
-                                                                </div>
-                                                                <small class="text-muted">
-                                                                    {{ $mutation->created_at->format('d M Y H:i') }}
-                                                                </small>
-                                                            </div>
-                                                        </li>
-                                                    @endforeach
-                                                </ul>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </div>
-
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card mb-4">
+                            <div class="card-header bg-dark">
+                                <i class="fas fa-tachometer-alt me-2"></i>Admin Dashboard
                             </div>
 
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="mb-0">
-                                    <i class="fas fa-users me-2"></i>User Management
-                                </h5>
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
-                                        <i class="fas fa-user-plus me-2"></i>Add New User
-                                    </button>
-                                    <button class="btn btn-outline-primary" data-bs-toggle="modal"
-                                        data-bs-target="#allUsersModal">
-                                        <i class="fas fa-list me-2"></i>See All Users
-                                    </button>
-                                </div>
-                            </div>
+                            <div class="card-body">
+                                <div class="row mb-4">
+                                    <div class="col-md-4">
+                                        <div class="card text-center p-3">
+                                            <div class="dashboard-icon">
+                                                <i class="fas fa-users"></i>
+                                            </div>
+                                            <h3>{{ $users->count() }}</h3>
+                                            <p class="text-muted mb-0">Total Users</p>
+                                        </div>
 
-                            <div class="card">
-                                <div class="card-header">
-                                    Recent Users
-                                </div>
-                                <div class="card-body">
-                                    @if($users->isEmpty())
-                                        <p class="text-center text-muted">No users found.</p>
-                                    @else
-                                        <ul class="user-list">
-                                            @foreach($users->take(4) as $user)
-                                                <li class="d-flex justify-content-between align-items-center">
-                                                    <div>
-                                                        <strong>{{ $user->name }}</strong><br>
-                                                        <span class="text-muted">{{ $user->email }}</span><br>
-                                                        <span
-                                                            class="user-role role-{{ $user->role }}">{{ ucfirst($user->role) }}</span>
-                                                    </div>
-                                                    <div class="d-flex gap-2">
-                                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
-                                                            data-bs-target="#editUserModal{{ $user->id }}">
-                                                            <i class="fas fa-edit"></i>
-                                                        </button>
-                                                        <form action="{{ route('delete-user', $user->id) }}" method="POST"
-                                                            style="display:inline;"
-                                                            onsubmit="return confirm('Yakin gak min mau hapus siswa ini?');">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="submit" class="btn btn-sm btn-outline-danger"><i
-                                                                    class="fas fa-trash"></i></button>
-                                                        </form>
-                                                    </div>
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    @endif
-                                </div>
-                            </div>
+                                        <!-- Daftar Saldo Siswa placed below Total Users -->
+                                        <div class="card mt-3">
+                                            <div class="card-header bg-primary text-white">
+                                                <i class="fas fa-wallet me-2"></i>Daftar Saldo Siswa
+                                            </div>
+                                            <div class="card-body p-2">
+                                                @php
+                                                    $siswaList = $users->where('role', 'siswa');
+                                                @endphp
+                                                <div class="table-responsive">
+                                                    <table class="table table-bordered table-sm">
+                                                        <thead class="table-light">
+                                                            <tr>
+                                                                <th>Nama</th>
+                                                                <th>Saldo</th>
+                                                                <th>Cetak</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach($siswaList as $siswa)
+                                                                                                             @php
+                                                                                                                // Safe approach to calculate balance
+                                                                                                                $credit = 0;
+                                                                                                                $debit = 0;
 
-                            @foreach($users as $user)
-                                <div class="modal fade" id="editUserModal{{ $user->id }}" tabindex="-1" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <form action="{{ route('update-user', $user->id) }}" method="POST">
-                                            @csrf
-                                            @method('PUT')
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title">Edit User</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                        aria-label="Close"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <div class="mb-3">
-                                                        <label class="form-label">Name</label>
-                                                        <input type="text" class="form-control" name="name"
-                                                            value="{{ $user->name }}" required>
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <label class="form-label">Email</label>
-                                                        <input type="email" class="form-control" name="email"
-                                                            value="{{ $user->email }}" required>
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <label class="form-label">New Password (optional)</label>
-                                                        <input type="password" class="form-control" name="password">
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <label class="form-label">Confirm New Password</label>
-                                                        <input type="password" class="form-control"
-                                                            name="password_confirmation">
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary"
-                                                        data-bs-dismiss="modal">Close</button>
-                                                    <button type="submit" class="btn btn-primary">Update User</button>
+                                                                                                                if ($siswa->wallets) {
+                                                                                                                    $mutasiDone = $siswa->wallets->where('status', 'done');
+                                                                                                                    $credit = $mutasiDone->sum('credit');
+                                                                                                                    $debit = $mutasiDone->sum('debit');
+                                                                                                                }
+
+                                                                                                                $saldo = $credit - $debit;
+                                                                                                            @endphp
+                                                                                                            <tr>
+                                                                                                                <td>{{ $siswa->name }}</td>
+                                                                                                                <td>Rp {{ number_format($saldo, 0, ',', '.') }}</td>
+                                                                                                                <td>
+                                                                                                                    <a href="{{ route('export-siswa-pdf', $siswa->id) }}"
+                                                                                                                        class="btn btn-outline-secondary btn-sm">
+                                                                                                                        <i class="fas fa-file-pdf"></i>
+                                                                                                                    </a>
+                                                                                                                </td>
+                                                                                                            </tr>
+                                                            @endforeach
+                                                        </tbody>
+                                                    </table>
                                                 </div>
                                             </div>
-                                        </form>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-8">
+                                        <div class="card h-100">
+                                            <div class="card-header">
+                                                <i class="fas fa-exchange-alt me-2"></i>Recent Transactions
+                                                <button class="btn btn-sm download-pdf-btn"
+                                style="background-color: #edf2f7; color: var(--primary-color); border: 1px solid var(--primary-color);"
+                                onclick="window.location.href='{{ route('export-transactions-pdf') }}'">
+                                <i class="fas fa-download me-1"></i>Download PDF (30 Days)
+                            </button>
+                                            </div>
+                                            <div class="card-body">
+                                                @if($mutasi->isEmpty())
+                                                    <p class="text-center text-muted">No transactions found.</p>
+                                                @else
+                                                    <ul class="list-group list-group-flush">
+                                                        @foreach($mutasi->take(5) as $mutation)
+                                                            <li class="list-group-item">
+                                                                <div class="d-flex justify-content-between align-items-center">
+                                                                    <div>
+                                                                        <span
+                                                                            class="@if($mutation->status == 'approved') transaction-approved @elseif($mutation->status == 'rejected') transaction-rejected @endif">
+                                                                            {{ $mutation->description }}
+                                                                        </span><br>
+                                                                        <small class="text-muted">
+                                                                            {{ $mutation->user->name ?? 'Unknown' }}
+                                                                        </small>
+                                                                    </div>
+                                                                    <small class="text-muted">
+                                                                        {{ $mutation->created_at->format('d M Y H:i') }}
+                                                                    </small>
+                                                                </div>
+                                                            </li>
+                                                        @endforeach
+                                                    </ul>
+                                                @endif
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            @endforeach
+
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-users me-2"></i>User Management
+                                    </h5>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                                            <i class="fas fa-user-plus me-2"></i>Add New User
+                                        </button>
+                                        <button class="btn btn-outline-primary" data-bs-toggle="modal"
+                                            data-bs-target="#allUsersModal">
+                                            <i class="fas fa-list me-2"></i>See All Users
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="card">
+                                    <div class="card-header">
+                                        Recent Users
+                                    </div>
+                                    <div class="card-body">
+                                        @if($users->isEmpty())
+                                            <p class="text-center text-muted">No users found.</p>
+                                        @else
+                                            <ul class="user-list">
+                                                @foreach($users->take(4) as $user)
+                                                    <li class="d-flex justify-content-between align-items-center">
+                                                        <div>
+                                                            <strong>{{ $user->name }}</strong><br>
+                                                            <span class="text-muted">{{ $user->email }}</span><br>
+                                                            <span
+                                                                class="user-role role-{{ $user->role }}">{{ ucfirst($user->role) }}</span>
+                                                        </div>
+                                                        <div class="d-flex gap-2">
+                                                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                                                                data-bs-target="#editUserModal{{ $user->id }}">
+                                                                <i class="fas fa-edit"></i>
+                                                            </button>
+                                                            <form action="{{ route('delete-user', $user->id) }}" method="POST"
+                                                                style="display:inline;"
+                                                                onsubmit="return confirm('Yakin gak min mau hapus siswa ini?');">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button type="submit" class="btn btn-sm btn-outline-danger"><i
+                                                                        class="fas fa-trash"></i></button>
+                                                            </form>
+                                                        </div>
+                                                    </li>
+                                                @endforeach
+                                            </ul>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                @foreach($users as $user)
+                                    <div class="modal fade" id="editUserModal{{ $user->id }}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <form action="{{ route('update-user', $user->id) }}" method="POST">
+                                                @csrf
+                                                @method('PUT')
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Edit User</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                            aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Name</label>
+                                                            <input type="text" class="form-control" name="name"
+                                                                value="{{ $user->name }}" required>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Email</label>
+                                                            <input type="email" class="form-control" name="email"
+                                                                value="{{ $user->email }}" required>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label">New Password (optional)</label>
+                                                            <input type="password" class="form-control" name="password">
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Confirm New Password</label>
+                                                            <input type="password" class="form-control"
+                                                                name="password_confirmation">
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary"
+                                                            data-bs-dismiss="modal">Close</button>
+                                                        <button type="submit" class="btn btn-primary">Update User</button>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog">
-                    <form action="{{ route('add-user') }}" method="POST">
-                        @csrf
+                <div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <form action="{{ route('add-user') }}" method="POST">
+                            @csrf
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Add New User</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Name</label>
+                                        <input type="text" class="form-control" name="name" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Email</label>
+                                        <input type="email" class="form-control" name="email" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Role</label>
+                                        <select name="role" class="form-select" required>
+                                            <option value="siswa">Siswa</option>
+                                            <option value="bank">Bank</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Password</label>
+                                        <input type="password" class="form-control" name="password" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Confirm Password</label>
+                                        <input type="password" class="form-control" name="password_confirmation" required>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <button type="submit" class="btn btn-primary">Add User</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="modal fade" id="allUsersModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-lg">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title">Add New User</h5>
+                                <h5 class="modal-title"><i class="fas fa-users me-2"></i>All Users</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
-                                <div class="mb-3">
-                                    <label class="form-label">Name</label>
-                                    <input type="text" class="form-control" name="name" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Email</label>
-                                    <input type="email" class="form-control" name="email" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Role</label>
-                                    <select name="role" class="form-select" required>
-                                        <option value="siswa">Siswa</option>
-                                        <option value="admin">Admin</option>
-                                        <option value="bank">Bank</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Password</label>
-                                    <input type="password" class="form-control" name="password" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Confirm Password</label>
-                                    <input type="password" class="form-control" name="password_confirmation" required>
-                                </div>
+                                @if($users->isEmpty())
+                                    <p class="text-center text-muted">No users found.</p>
+                                @else
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Name</th>
+                                                    <th>Email</th>
+                                                    <th>Role</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($users as $user)
+                                                    <tr>
+                                                        <td>{{ $user->name }}</td>
+                                                        <td>{{ $user->email }}</td>
+                                                        <td><span
+                                                                class="badge bg-{{ $user->role == 'admin' ? 'danger' : ($user->role == 'bank' ? 'warning' : 'info') }}">{{ ucfirst($user->role) }}</span>
+                                                        </td>
+                                                        <td>
+                                                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
+                                                                data-bs-target="#editUserModal{{ $user->id }}">
+                                                                <i class="fas fa-edit"></i>
+                                                            </button>
+                                                            <form action="{{ route('delete-user', $user->id) }}" method="POST"
+                                                                style="display:inline;"
+                                                                onsubmit="return confirm('Are you sure you want to delete this user?');">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button type="submit" class="btn btn-sm btn-outline-danger"><i
+                                                                        class="fas fa-trash"></i></button>
+                                                            </form>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @endif
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-primary">Add User</button>
                             </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <div class="modal fade" id="allUsersModal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-lg">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title"><i class="fas fa-users me-2"></i>All Users</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            @if($users->isEmpty())
-                                <p class="text-center text-muted">No users found.</p>
-                            @else
-                                <div class="table-responsive">
-                                    <table class="table table-hover">
-                                        <thead>
-                                            <tr>
-                                                <th>Name</th>
-                                                <th>Email</th>
-                                                <th>Role</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach($users as $user)
-                                                <tr>
-                                                    <td>{{ $user->name }}</td>
-                                                    <td>{{ $user->email }}</td>
-                                                    <td><span
-                                                            class="badge bg-{{ $user->role == 'admin' ? 'danger' : ($user->role == 'bank' ? 'warning' : 'info') }}">{{ ucfirst($user->role) }}</span>
-                                                    </td>
-                                                    <td>
-                                                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal"
-                                                            data-bs-target="#editUserModal{{ $user->id }}">
-                                                            <i class="fas fa-edit"></i>
-                                                        </button>
-                                                        <form action="{{ route('delete-user', $user->id) }}" method="POST"
-                                                            style="display:inline;"
-                                                            onsubmit="return confirm('Are you sure you want to delete this user?');">
-                                                            @csrf
-                                                            @method('DELETE')
-                                                            <button type="submit" class="btn btn-sm btn-outline-danger"><i
-                                                                    class="fas fa-trash"></i></button>
-                                                        </form>
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                            @endif
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         </div>
                     </div>
                 </div>
-            </div>
         @endif
 
         @if(Auth::user()->role == 'siswa')
@@ -727,6 +780,50 @@
 
         <div class="row g-4">
             @if(Auth::user()->role == 'bank')
+                {{-- Daftar Saldo Siswa Section --}}
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-primary text-white">
+                            <i class="fas fa-wallet me-2"></i>Daftar Saldo Siswa
+                        </div>
+                        <div class="card-body">
+                            @if($users->isEmpty())
+                                <p class="text-center text-muted mb-0">No student accounts found.</p>
+                            @else
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Nama</th>
+                                                <th>Saldo</th>
+                                                <th>Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($users as $siswa)
+                                                @if($siswa->role == 'siswa')
+                                                    <tr>
+                                                        <td>{{ $siswa->name }}</td>
+                                                        <td>Rp {{ number_format($siswa->saldo, 0, ',', '.') }}</td>
+                                                        <td>
+                                                            <a href="{{ route('laporan.siswa.pdf', $siswa->id) }}"
+                                                                class="btn btn-sm btn-outline-secondary" target="_blank"
+                                                                title="Export Laporan PDF">
+                                                                <i class="fas fa-file-pdf me-1"></i>PDF
+                                                            </a>
+                                                        </td>
+                                                    </tr>
+                                                @endif
+                                            @endforeach
+                                        </tbody>
+
+                                    </table>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
                 {{-- TopUp Siswa Section --}}
                 <div class="col-md-4">
                     <div class="card h-100">
@@ -754,8 +851,45 @@
                                     </div>
                                 </div>
                                 <div class="d-grid">
-                                    <button type="submit" class="btn btn-info text-white">
-                                        <i class="fas fa-paper-plane me-1"></i>Top-Up
+                                    <button type="submit" class="btn btn-info text-white btn-lg shadow-sm fw-bold">
+                                        <i class="fas fa-paper-plane me-2"></i>Top-Up
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Withdraw Section --}}
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-header bg-danger text-white">
+                            <i class="fas fa-money-bill-wave me-2"></i>Withdraw Siswa
+                        </div>
+                        <div class="card-body">
+                        <form action="{{ route('withdraw.siswa') }}" method="POST">
+                                @csrf
+                                <div class="mb-3">
+                                    <label for="student_id" class="form-label">Pilih Siswa</label>
+                                    <select name="student_id" class="form-select" required>
+                                        @foreach($users as $siswa)
+                                            @if($siswa->role == 'siswa')
+                                                <option value="{{ $siswa->id }}">{{ $siswa->name }}</option>
+                                            @endif
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="credit" class="form-label">Jumlah Withdraw</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">Rp</span>
+                                        <input type="number" name="credit" class="form-control" placeholder="Minimum 10.000"
+                                            required min="10000">
+                                    </div>
+                                </div>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-danger btn-lg shadow-sm fw-bold">
+                                        <i class="fas fa-hand-holding-usd me-2"></i>Withdraw
                                     </button>
                                 </div>
                             </form>
@@ -764,8 +898,8 @@
                 </div>
 
                 {{-- Payment Request Section --}}
-                <div class="col-md-8">
-                    <div class="card h-100">
+                <div class="col-md-12">
+                    <div class="card">
                         <div class="card-header bg-warning text-dark d-flex align-items-center">
                             <i class="fas fa-money-check-alt me-2"></i>
                             <span>Payment Requests</span>
@@ -797,7 +931,7 @@
                                                             <form action="{{ route('approve', $wallet->id) }}" method="POST"
                                                                 title="Accept Request">
                                                                 @csrf
-                                                                <button type="submit" class="btn btn-sm btn-success"
+                                                                <button type="submit" class="btn btn-success rounded-pill shadow-sm"
                                                                     data-bs-toggle="tooltip" title="Accept">
                                                                     <i class="fas fa-check"></i>
                                                                 </button>
@@ -805,7 +939,7 @@
                                                             <form action="{{ route('reject', $wallet->id) }}" method="POST"
                                                                 title="Reject Request">
                                                                 @csrf
-                                                                <button type="submit" class="btn btn-sm btn-danger"
+                                                                <button type="submit" class="btn btn-danger rounded-pill shadow-sm"
                                                                     data-bs-toggle="tooltip" title="Reject">
                                                                     <i class="fas fa-times"></i>
                                                                 </button>
@@ -864,11 +998,11 @@
                                                     </td>
                                                     <td>
                                                         @if($item->status == 'done')
-                                                            <span class="badge bg-success">Done</span>
+                                                            <span class="badge bg-success rounded-pill">Done</span>
                                                         @elseif($item->status == 'rejected')
-                                                            <span class="badge bg-danger">Rejected</span>
+                                                            <span class="badge bg-danger rounded-pill">Rejected</span>
                                                         @else
-                                                            <span class="badge bg-warning text-dark">Process</span>
+                                                            <span class="badge bg-warning text-dark rounded-pill">Process</span>
                                                         @endif
                                                     </td>
                                                 </tr>

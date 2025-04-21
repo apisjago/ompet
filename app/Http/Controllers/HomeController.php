@@ -12,33 +12,30 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $user = Auth::user(); // Get the currently logged-in user
+        $user = Auth::user();
 
         // Admin Section
         if ($user->role == 'admin') {
-            $users = User::all(); // Get all users for admin
-            $mutasi = Wallet::where('status', 'done')->orderBy('created_at', 'desc')->get(); // Get mutasi for admin
-            $mutasi = Wallet::with('user')->latest()->get();
+            $users = User::with('wallets')->get(); // ✅ pakai wallets
+            $mutasi = Wallet::with('user')->where('status', 'done')->latest()->get();
 
-
-            return view('home', compact('users', 'mutasi')); // Pass $users and $mutasi to the view
+            return view('home', compact('users', 'mutasi'));
         }
 
         // Bank Section
         if ($user->role == 'bank') {
             $wallet = Wallet::where('status', 'done')->get();
-            $credit = 0;
-            $debit = 0;
-            foreach ($wallet as $w) {
-                $credit += $w->credit;
-                $debit  += $w->debit;
-            }
+            $credit = $wallet->sum('credit');
+            $debit = $wallet->sum('debit');
             $saldo = $credit - $debit;
-            $users = User::where('role', 'siswa')->get(); // Get all 'siswa' users
+
+            $users = User::where('role', 'siswa')->with('wallets')->get(); // ✅ pakai wallets
             $request_payment = Wallet::where('status', 'process')->orderBy('created_at', 'DESC')->get();
 
-            // Get both 'done' and 'rejected' transactions
-            $mutasi = Wallet::whereIn('status', ['done', 'rejected'])->orderBy('created_at', 'DESC')->get();
+            $mutasi = Wallet::with('user')
+                ->whereIn('status', ['done', 'rejected'])
+                ->orderBy('created_at', 'DESC')
+                ->get();
             
             $allMutasi = Wallet::where('status', 'done')->count();
 
@@ -48,20 +45,16 @@ class HomeController extends Controller
         // Siswa Section
         if ($user->role == 'siswa') {
             $wallets = Wallet::where('user_id', $user->id)->where('status', 'done')->get();
-            $credit = 0;
-            $debit = 0;
-            foreach ($wallets as $wallet) {
-                $credit += $wallet->credit;
-                $debit += $wallet->debit;
-            }
+            $credit = $wallets->sum('credit');
+            $debit = $wallets->sum('debit');
             $saldo = $credit - $debit;
+
             $mutasi = Wallet::where('user_id', $user->id)->orderBy('created_at', 'desc')->get();
-            $users = User::where('role', 'siswa')->where('id', '!=', $user->id)->get(); // Exclude current user
+            $users = User::where('role', 'siswa')->where('id', '!=', $user->id)->get();
 
             return view('home', compact('saldo', 'mutasi', 'users'));
         }
 
-        // Default Response
         return redirect()->route('home');
     }
 
@@ -69,20 +62,36 @@ class HomeController extends Controller
     {
         $user = Auth::user();
 
-        // Allow only admin and bank
         if (!in_array($user->role, ['admin', 'bank'])) {
             abort(403, 'Unauthorized action.');
         }
 
-        // Get mutasi sesuai role
         if ($user->role == 'admin') {
-            $mutasi = Wallet::where('status', 'done')->orderBy('created_at', 'desc')->get();
+            $mutasi = Wallet::with('user')->where('status', 'done')->orderBy('created_at', 'desc')->get();
         } else {
-            $mutasi = Wallet::whereIn('status', ['done', 'rejected'])->orderBy('created_at', 'desc')->get();
+            $mutasi = Wallet::with('user')->whereIn('status', ['done', 'rejected'])->orderBy('created_at', 'desc')->get();
         }
 
         $pdf = PDF::loadView('transactions.pdf', compact('mutasi'));
 
         return $pdf->download('mutasi-transactions.pdf');
+    }
+
+    public function exportSiswaPdf($id)
+    {
+        $siswa = User::findOrFail($id);
+
+        $mutasi = Wallet::where('user_id', $id)
+            ->where('status', 'done')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $credit = $mutasi->sum('credit');
+        $debit = $mutasi->sum('debit');
+        $saldo = $credit - $debit;
+
+        $pdf = PDF::loadView('transactions.laporan_siswa_pdf', compact('siswa', 'mutasi', 'saldo'));
+
+        return $pdf->download('laporan-transaksi-' . $siswa->name . '.pdf');
     }
 }
